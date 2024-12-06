@@ -8,7 +8,6 @@ pace@jolokianetworks.com
 AGPL License
 USE THIS SOFTWARE AT YOUR OWN RISK!
 PLEASE REPORT BUGS SO THEY CAN GET FIXED!
-
 (c)2012 Derek Yang - hswayne77@gmail.com
 """
 
@@ -23,7 +22,7 @@ def docmd(cmd):
     run a command and return the communicate PIPE
     """
     if debug:
-        print 'running cmd       :',cmd
+        print(f"running cmd       :,{cmd}")
     execute=subprocess.Popen([cmd],shell=True,stdout=subprocess.PIPE)
     return execute.communicate()[0]
 
@@ -32,7 +31,7 @@ def exportvm(vmname,lvdev,destfile,gz=False):
     export lvdev to dest
     """
     if debug:
-        print 'exporting vm      :',vmuuid
+        print(f"exporting vm      :,{vmuuid}")
     # we'll need to handle difference block sizes at some point
     blocksize=1024*1024
     notification=float(2**30) # 2**30=GB
@@ -40,16 +39,16 @@ def exportvm(vmname,lvdev,destfile,gz=False):
         notification=notification/4
     vmuuid=getvmuuid(vmname)
     vmstatus=getvmstatus(vmuuid)
-    if vmstatus=='running':
-        cmd='xe vm-shutdown -u root uuid='+vmuuid
+    if vmstatus=="running":
+        cmd=f"xe vm-shutdown -u root uuid=+{vmuuid}"
         if debug:
-            print 'halting vm uuid   :',vmuuid
+            print(f"halting vm uuid   :,{vmuuid}")
         docmd(cmd)
     vmstatus=getvmstatus(vmuuid)
     if vmstatus=='halted':
         if not os.path.exists(destfile):
             try:
-                print '\nActivating Volume:'
+                print("\nActivating Volume:")
                 cmd='lvchange -v -ay '+lvdev
                 lvchange=docmd(cmd)
                 source=open(lvdev,'rb')
@@ -58,7 +57,7 @@ def exportvm(vmname,lvdev,destfile,gz=False):
                 else:
                     dest=open(destfile,'wb')
                 noticetick=notification/(2**30)
-                print '\nRW notification every: '+str(noticetick)+'GB'
+                print(f"\nRW notification every: '+str(noticetick)+'GB")
                 notification=notification/blocksize
                 sys.stdout.write('Exporting: ')
                 write=0
@@ -73,29 +72,29 @@ def exportvm(vmname,lvdev,destfile,gz=False):
                     if write%notification==0:
                         sys.stdout.write('w ')
                     sys.stdout.flush()
-                print '\nSuccessful export'
+                print ("\nSuccessful export")
             finally:
                 try:
                     source.close()
                     dest.close()
                 finally:
-                    print '\nDeactivating Volume:'
-                    cmd='lvchange -v -an '+lvdev
+                    print ("\nDeactivating Volume:")
+                    cmd=f"lvchange -v -an {lvdev}"
                     docmd(cmd)
         else:
-            print 'ERROR: destination file '+destfile+' exists.'
+            print(f"ERROR: destination file {destfile} exists.")
     else:
-        print 'ERROR: vm status:',vmstatus,'vm needs to be halted to migrate'
+        print("ERROR: vm status:',vmstatus,'vm needs to be halted to migrate")
 
 def importvm(lvdest,sourcefile,vgdest,lvsize,gz=False):
     """
     import a raw vmfile into a logical volume
     """
     if debug:
-        print 'importing vm from :',sourcefile
-        print 'to logical volume :',lvdest
-        print 'on volume group   :',vgdest
-        print 'with gz           :',gz
+        print(f"importing vm from :,sourcefile")
+        print(f"to logical volume :,{lvdest}")
+        print(f"on volume group   :,{vgdest}")
+        print(f"with gz           :,{gz}")
     blocksize=1024*1024
     notification=float(2**30) # 2**30=GB
     if gz:
@@ -104,11 +103,11 @@ def importvm(lvdest,sourcefile,vgdest,lvsize,gz=False):
     lvvgs=getlvdevlist()
     for lvvg in lvvgs:
         if lvdest==lvvg[0]:
-            print 'ERROR: lv '+lvdest+' exists cannot import'
+            print(f"ERROR: lv {lvdest} exists cannot import")
             lvexists=1
     if not lvexists:
-        cmd='lvcreate -v -n '+lvdest+' -L '+lvsize+'G '+vgdest
-        print '\nCreating Logical Volume:'
+        cmd=(f"lvcreate -v -n {lvdest} -L {lvsize}G {vgdest}")
+        print("\nCreating Logical Volume:")
         docmd(cmd)
         try:
             if gz:
@@ -118,7 +117,7 @@ def importvm(lvdest,sourcefile,vgdest,lvsize,gz=False):
             destlv='/dev/'+vgdest+'/'+lvdest
             dest=open(destlv,'wb')
             noticetick=notification/(2**30)
-            print '\nRW notification every: '+str(noticetick)+'GB'
+            print(f"\nRW notification every: '{str(noticetick)}GB")
             notification=notification/blocksize
             sys.stdout.write('Importing: ')
             write=0
@@ -133,7 +132,7 @@ def importvm(lvdest,sourcefile,vgdest,lvsize,gz=False):
                 if write%notification==0:
                     sys.stdout.write('w ')
                 sys.stdout.flush()
-            print '\nSuccessful import'
+            print ("\nSuccessful import")
         finally:
             try:
                 source.close()
@@ -141,42 +140,42 @@ def importvm(lvdest,sourcefile,vgdest,lvsize,gz=False):
             finally:
                 print
     else:
-        print 'ERROR: logical volume '+lvdest+' exists'
+        print(f"ERROR: logical volume {lvdest} exists")
 
 def importxenserverdisk(sourcefile,diskuuid,vmuuid,gz=False):
     """
     import disk from sourcefile into xenserver
     """
     if debug:
-        print 'importing vm from :',sourcefile
-        print 'to disk uuid      :',diskuuid
-        print 'with gz           :',gz
+        print(f"importing vm from :,{sourcefile}")
+        print(f"to disk uuid      :,{diskuuid}")
+        print(f"with gz           :,{gz}")
     blocksize=1024*1024
     notification=float(2**30) # 2**30=GB
     if gz:
         notification=notification/4
     vmstatus=getvmstatus(vmuuid)
     if vmstatus=='running':
-        cmd='xe vm-shutdown -u root uuid='+vmuuid
+        cmd=(f"xe vm-shutdown -u root uuid={vmuuid}")
         if debug:
-            print 'halting vm uuid   :',vmuuid
+            print("halting vm uuid   :'{vmuuid}")
         docmd(cmd)
     vmstatus=getvmstatus(vmuuid)
-    if vmstatus=='halted':    
+    if vmstatus=='halted':
         if os.path.exists(sourcefile):
             try:
                 lvdev=getlvdevxen(diskuuid)[0]
-                print 'to logical volume :',lvdev
-                print '\nActivating Volume:'
-                cmd='lvchange -v -ay '+lvdev
+                print("to logical volume :,{lvdev}")
+                print("\nActivating Volume:")
+                cmd=("lvchange -v -ay {lvdev}")
                 lvchange=docmd(cmd)
                 if gz:
                     source=gzip.GzipFile(sourcefile,'rb')
                 else:
                     source=open(sourcefile,'rb')
-                dest=open(lvdev,'wb')
+                dest=open(lvdev,"wb")
                 noticetick=notification/(2**30)
-                print '\nRW notification every: '+str(noticetick)+'GB'
+                print(f"\nRW notification every: {str(noticetick)}GB")
                 notification=notification/blocksize
                 sys.stdout.write('Importing: ')
                 write=0
@@ -191,19 +190,19 @@ def importxenserverdisk(sourcefile,diskuuid,vmuuid,gz=False):
                     if write%notification==0:
                         sys.stdout.write('w ')
                     sys.stdout.flush()
-                print '\nSuccessful import'
+                print(f"\nSuccessful import")
             finally:
                 try:
                     source.close()
                     dest.close()
                 finally:
-                    print '\nDeactivating Volume:'
-                    cmd='lvchange -v -an '+lvdev
+                    print("\nDeactivating Volume:")
+                    cmd=(f"lvchange -v -an {lvdev}")
                     docmd(cmd)
         else:
-            print 'ERROR: source file '+sourcefile+' does not exist.'
+            print(f"ERROR: source file {sourcefile} does not exist.")
     else:
-        print 'ERROR: vm status:',vmstatus,'vm needs to be halted to import disk'
+        print(f"ERROR: vm status: {vmstatus} vm needs to be halted to import disk")
 
 
 def getdiskuuidvm(diskuuid):
@@ -211,11 +210,11 @@ def getdiskuuidvm(diskuuid):
     get vm uuid from disk uuid and return it
     """
     if debug:
-        print 'vm from disk uuid :',diskuuid
+        print(f"vm from disk uuid :,{diskuuid}")
     cmd='xe vbd-list vdi-uuid='+diskuuid
-    response=docmd(cmd).split('vm-uuid ( RO): ')
+    response=docmd(cmd).split("vm-uuid ( RO): ")
     vmuuid=response[1].split('\n')[0]
-    return vmuuid    
+    return vmuuid
 
 def getlvdevlist():
     """
@@ -239,7 +238,7 @@ def getlvdevxen(vmdiskuuid):
     take the vmdisk uuid and return the logical volume device name
     """
     if debug:
-        print 'get lv from uuid  :',vmdiskuuid
+        print(f"get lv from uuid  :,{vmdiskuuid}")
     lvvgs=getlvdevlist()
     for lvvg in lvvgs:
         if vmdiskuuid in lvvg[0]:
@@ -253,7 +252,7 @@ def getvmdiskuuid(vmuuid):
     return disk uuids in list
     """
     if debug:
-        print 'disk from uuid    :',vmuuid
+        print("disk from uuid    :'{vmuuid}")
     diskuuid=[]
     cmd='xe vbd-list vm-uuid='+vmuuid
     response=docmd(cmd).split('vdi-uuid ( RO): ')
@@ -276,7 +275,7 @@ def getvmuuid(vmname):
     return uuid
     """
     if debug:
-        print 'uuid from name    :',vmname
+        print(f"uuid from name    :,{vmname}")
     try:
         cmd='xe vm-list name-label=\''+vmname+'\''
         uuid=docmd(cmd).split(':')[1].split(' ')[1][:-1]
@@ -289,9 +288,9 @@ def reftoraw(refdir,rawfile,gz=False):
     take the ref directory of an xva file and create a raw importable file
     """
     if debug:
-        print 'ref dir           :',refdir
-        print 'to raw file       :',rawfile
-        print 'gzip              :',gz
+        print(f"ref dir           :{refdir}")
+        print(f"to raw file       :{rawfile}")
+        print(f"gzip              :{gz}")
     blocksize=1024*1024
     notification=float(2**30) # 2**30=GB
     if gz:
@@ -300,12 +299,12 @@ def reftoraw(refdir,rawfile,gz=False):
     for dirobj in os.listdir(refdir):
         try:
             numfile=int(dirobj)
-        except ValueError, TypeError:
+        except (ValueError, TypeError):
             numfile=0;
         if numfile>numfiles:
             numfiles=numfile
-    print 'last file         :',numfiles+1
-    print 'disk image size   :',(numfiles+1)/1024,'GB'
+    print(f"last file         :{numfiles+1}")
+    print(f"disk image size   :{(numfiles+1)/1024}GB")
     if os.path.isdir(refdir):
         # This may cause problems in Windows!
         if refdir[-1]!='/':
@@ -314,7 +313,7 @@ def reftoraw(refdir,rawfile,gz=False):
             try:
                 filenum=0
                 noticetick=notification/(2**30)
-                print '\nRW notification every: '+str(noticetick)+'GB'
+                print(f"\nRW notification every: {str(noticetick)}GB")
                 notification=notification/blocksize
                 if gz:
                     dest=gzip.GzipFile(rawfile,'wb')
@@ -350,7 +349,7 @@ def reftoraw(refdir,rawfile,gz=False):
                         sys.stdout.write('w ')
                     sys.stdout.flush()
                     filenum+=1
-                print '\nSuccessful convert'
+                print("\nSuccessful convert")
             finally:
                 try:
                     dest.close()
@@ -358,37 +357,37 @@ def reftoraw(refdir,rawfile,gz=False):
                 finally:
                     print
         else:
-            print 'ERROR: rawfile '+rawfile+' exists'
+            print(f"ERROR: rawfile {rawfile} exists")
     else:
-        print 'ERROR: refdir '+refdir+' does not exist'
+        print(f"ERROR: refdir {refdir} does not exist")
 
 def vmdktoraw(vmdkfile,rawfile,gz):
     """
     take the ref directory of an xva file and create a raw importable file
     """
     if debug:
-        print 'vmdk              :',vmdkfile
-        print 'to raw            :',rawfile
-        print 'gzip              :',gz
+        print(f"vmdk              :,{vmdkfile}")
+        print(f"to raw            :,{rawfile}")
+        print(f"gzip              :,{gz}")
     if (not gz and not os.path.exists(rawfile)) or ((gz and not os.path.exists(rawfile+'.gz')) and (gz and not os.path.exists(rawfile))):
         try:
             cmd='qemu-img convert '+vmdkfile+' -O raw '+rawfile
-            print 'Converting...'
+            print("Converting...")
             response=docmd(cmd)
-            print response
+            print(response)
             if gz:
                 cmd='gzip -v '+rawfile
-                print 'Gzipping...'
+                print ("Gzipping...")
                 response=docmd(cmd)
-            print 'Sucessful convert'
+            print('Sucessful convert')
         except:
-            print 'ERROR: problem converting file (do you have qemu-img installed?)'
+            print('ERROR: problem converting file (do you have qemu-img installed?)')
     else:
         if gz:
-            print 'ERROR: rawfile '+rawfile+' or '+rawfile+'.gz exists'
+            print(f"ERROR: rawfile {rawfile} or {rawfile}.gz exists")
         else:
-            print 'ERROR: rawfile '+rawfile+' exists'
-                    
+            print (f"ERROR: rawfile {rawfile} exists")
+
 ##
 ## Main Program
 ##
@@ -398,7 +397,7 @@ if __name__=='__main__':
     global debug
     debug=False
     # Hello world
-    print 'xenmigrate 0.7.4 -- 2011.09.13\n(c)2011 Jolokia Networks and Mark Pace -- jolokianetworks.com\n'
+    print("xenmigrate 0.7.4 -- 2011.09.13\n(c)2011 Jolokia Networks and Mark Pace -- jolokianetworks.com\nUpdated to python3 by Rafael Trevisan @ 2024")
     # process arguments
     from optparse import OptionParser
     parser=OptionParser(usage='%prog [-cdhiltvxz] [vmname]|[exportLVdev]|[importVolGroup]|[importdiskuuid]|[converttofile]')
@@ -410,7 +409,7 @@ if __name__=='__main__':
     parser.add_option('-t','--type',action='store',type='string',dest='type',metavar='TYPE',help='import to [xen]|[xenserver]',default='xen')
     parser.add_option('-x','--export',action='store',type='string',dest='export',metavar='FILE',help='export from Xen Server or from Logical Volume dev to FILE')
     parser.add_option('-z','--gzip',action='store_true',dest='gz',help='use compression for import, export, or convert (SLOW!)',default=False)
-    (opts,args)=parser.parse_args()    
+    (opts,args)=parser.parse_args()
     if len(args)<1:
         parser.print_help()
         sys.exit(1)
@@ -423,28 +422,28 @@ if __name__=='__main__':
             pass
         else:
             vmuuid=getvmuuid(vmname)
-            print 'vm name-label     :',vmname
-            print 'vm uuid           :',vmuuid
+            print(f"(vm name-label     :,{vmname}")
+            print(f"(vm uuid           :{vmuuid}")
             vmdiskuuids=getvmdiskuuid(vmuuid)
             for vmdiskuuid in vmdiskuuids:
-                print 'vm disk uuid      :',vmdiskuuid[0]
-                print 'vm disk partid    :',vmdiskuuid[1]
+                print(f"vm disk uuid      :,{vmdiskuuid[0]}")
+                print(f"vm disk partid    :,{vmdiskuuid[1]}")
                 if opts.lvdev:
                     lvdev,lvsize=getlvdevxen(vmdiskuuid[0])
                     if lvdev is not None:
-                        print 'vm disk dev name  :',lvdev
-                        print 'vm disk size      :',lvsize+'GB'
+                        print(f"vm disk dev name  : {lvdev}")
+                        print(f"vm disk size      : {lvsize}GB")
                     else:
-                        print 'vm disk dev name  : not found in mounted storage repositories'
+                        print("vm disk dev name  : not found in mounted storage repositories")
     if opts.export and opts.doimport:
-        print 'ERROR: export and import cannot be run at the same time'
+        print("ERROR: export and import cannot be run at the same time")
     elif opts.export and opts.convert:
-        print 'ERROR: export and convert cannot be run at the same time'
+        print("ERROR: export and convert cannot be run at the same time")
     elif opts.doimport and opts.convert:
-        print 'ERROR: import and convert cannot be run at the same time'
+        print("ERROR: import and convert cannot be run at the same time")
     elif opts.export and opts.doimport and opts.convert:
-        print 'ERROR: you have got to be kidding me -- need some more options to run at the same time?'
-    elif opts.export:        
+        print("ERROR: you have got to be kidding me -- need some more options to run at the same time?")
+    elif opts.export:
         if '/dev' in vmname:
             vmdiskuuids=[vmname]
             # need some logic here to test for logical volume so we don't just blow up
@@ -466,12 +465,12 @@ if __name__=='__main__':
                 exportname=exportname+'_'+vmdiskuuid[1]+'_'+lvsize
                 if opts.gz:
                     exportname=exportname+'.gz'
-                print 'export dev        :',lvdev
-                print 'to raw file       :',exportname
+                print(f"export dev        : {lvdev}")
+                print(f"to raw file       : {exportname}")
                 if lvdev:
                     exportvm(vmname,lvdev,exportname,opts.gz)
-        print 'You many need to restart your VM:'
-        print 'xe vm-startup -u root uuid='+vmuuid
+        print("You may need to restart your VM:")
+        print(f"xe vm-startup -u root uuid={vmuuid}")
     elif opts.doimport:
         importname=opts.doimport
         if importname[-3:]=='.gz':
@@ -486,24 +485,24 @@ if __name__=='__main__':
                     lvdest=lvdesttmp.split('_')[0]
                 else:
                     lvdest=lvdest+'_'+lvdesttmp.split('_')[index]
-            print 'import raw file   :',opts.doimport
-            print 'to lv             :',lvdest
-            print 'in vg             :',args[0]
-            print 'lv size           :',lvsize+'GB'
-            print 'xen config partid :',lvpartid
+            print(f"import raw file   : {opts.doimport}")
+            print(f"to lv             : {lvdest}")
+            print(f"in vg             : {args[0]}")
+            print(f"lv size           : {lvsize}GB")
+            print(f"xen config partid : {lvpartid}")
             importvm(lvdest,opts.doimport,args[0],lvsize,opts.gz)
         elif opts.type=='xenserver':
-            print 'import raw file   :',opts.doimport
-            print 'to disk uuid      :',args[0]
+            print(f"import raw file   : {opts.doimport}")
+            print(f"to disk uuid      : {args[0]}")
             vmuuid=getdiskuuidvm(args[0])
-            print 'vm uuid           :',vmuuid
+            print(f"vm uuid           : {vmuuid}")
             importxenserverdisk(opts.doimport,args[0],vmuuid,opts.gz)
         else:
-            print 'ERROR: unknown Xen type for import'
+            print("ERROR: unknown Xen type for import")
     elif opts.convert:
         if os.path.isdir(opts.convert):
-            print 'convert ref dir   :',opts.convert
-            print 'to raw file       :',args[0]
+            print(f"convert ref dir   : {opts.convert}")
+            print(f"to raw file       : {args[0]}")
             reftoraw(opts.convert,args[0],opts.gz)
         elif os.path.isfile(opts.convert):
             if opts.convert[-5:]=='.vmdk':
@@ -511,12 +510,11 @@ if __name__=='__main__':
                 if filename[-3:]=='.gz':
                     opts.gz=True
                     filename=filename[:-3]
-                print 'convert vmdk file :',opts.convert
-                print 'to raw file       :',filename
+                print(f"convert vmdk file : {opts.convert}")
+                print(f"to raw file       : {filename}")
                 vmdktoraw(opts.convert,filename,opts.gz)
             else:
-                print 'ERROR: unknown file convert format'
+                print("ERROR: unknown file convert format")
         else:
-            print 'ERROR: convert source directory or file does not exist'
+            print("ERROR: convert source directory or file does not exist")
             sys.exit(1)
-
