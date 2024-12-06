@@ -1,5 +1,7 @@
 xenserver_to_xen
 ================
+# THIS PROJECT IS FORKED FROM Derek Yang ORIGINAL SCRIPT, UPDATED TO PYTHON 3
+
   This project is for migrating from xenserver `*.xva` image to xen `*.img` image.
 
 ### Quickstart
